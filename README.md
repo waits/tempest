@@ -5,6 +5,9 @@
 [![CodeQL](https://github.com/Amatsagu/Tempest/actions/workflows/github-code-scanning/codeql/badge.svg?branch=master)](https://github.com/Amatsagu/Tempest/actions/workflows/github-code-scanning/codeql)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 
+## Warning
+Tempest v1 is no longer supported!
+
 # Tempest
 Tempest is a [Discord](https://discord.com) API wrapper for Applications, written in [Golang](https://golang.org/). It aims to be fast, use minimal caching and be easier to use than other Discord API wrappers using http.
 
