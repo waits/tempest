@@ -1,8 +1,5 @@
-[![Go Reference](https://pkg.go.dev/badge/github.com/disgoorg/disgo.svg)](https://pkg.go.dev/github.com/Amatsagu/Tempest)
-[![Go Report](https://goreportcard.com/badge/github.com/disgoorg/disgo)](https://goreportcard.com/report/github.com/Amatsagu/Tempest)
 [![License](https://img.shields.io/github/license/Amatsagu/tempest)](https://github.com/Amatsagu/Tempest/blob/master/LICENSE)
-[![Maintenance Status](https://img.shields.io/maintenance/yes/2023)](https://github.com/Amatsagu/Tempest)
-[![CodeQL](https://github.com/Amatsagu/Tempest/actions/workflows/github-code-scanning/codeql/badge.svg?branch=master)](https://github.com/Amatsagu/Tempest/actions/workflows/github-code-scanning/codeql)
+[![Maintenance Status](https://img.shields.io/maintenance/no/2023)](https://github.com/Amatsagu/Tempest)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 
 ## Warning
