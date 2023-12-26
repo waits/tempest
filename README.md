@@ -13,51 +13,22 @@ Tempest is a [Discord](https://discord.com) API wrapper for Applications, writte
 
 It was created as a better alternative to [discord-interactions-go](https://github.com/bsdlp/discord-interactions-go) which is "low level" and outdated.
 
-## Summary
-1. [HTTP vs Gateway](#http-vs-gateway)
-2. [Special features](#special-features)
-3. [Getting Started](#getting-started)
-4. [Troubleshooting](#troubleshooting)
-5. [Contributing](#contributing)
-
-### HTTP vs Gateway
-**TL;DR**: you probably should be using libraries like [DiscordGo](https://github.com/bwmarrin/discordgo) unless you know why you're here.
-
-There are two ways for bots to receive events from Discord. Most API wrappers such as **DiscordGo** use a WebSocket connection called a "gateway" to receive events, but **Tempest** receives interaction events over HTTP. Using http hooks lets you scale code more easily & reduce resource usage at cost of greatly reduced number of events you can use. You can easily create bots for roles, minigames, custom messages or admin utils but it'll be very difficult / impossible to create music or moderation bots.
+> [!IMPORTANT]
+> This branch is highly experimental and is not intended to be used in regular projects.
+> It strips Tempest from most of high level abstractions giving more control at cost of reduced options.
 
 ### Special features
-* [Easy to use & efficient handler for (/) commands & auto complete interactions](https://pkg.go.dev/github.com/Amatsagu/Tempest#Client.RegisterCommand)
-    - Deep control with [command middleware(s)](https://pkg.go.dev/github.com/Amatsagu/Tempest#ClientOptions)
 * [Exposed REST](https://pkg.go.dev/github.com/Amatsagu/Tempest#Client.Rest)
-* [Easy component & modal handling](https://pkg.go.dev/github.com/Amatsagu/Tempest#Client.AwaitComponent)
+* [Easy dynamic component & modal handling](https://pkg.go.dev/github.com/Amatsagu/Tempest#Client.AwaitComponent)
     - Works with buttons, select menus, text inputs and modals,
-    - Supports timeouts & gives a lot of freedom,
-    - Works for both [static](https://pkg.go.dev/github.com/Amatsagu/Tempest#Client.RegisterComponent) and [dynamic](https://pkg.go.dev/github.com/Amatsagu/Tempest#Client.AwaitModal) ways
-* [Simple way to sync (/) commands with API](https://pkg.go.dev/github.com/Amatsagu/Tempest#Client.SyncCommands)
+    - Supports timeouts,
 * Request failure auto recovery (3 attempts)
     - On failed attempts *(probably due to internet connection)*, it'll try again up to 3 times before returning error
 * No Discord data caching by default
 
 > [!NOTE]
-> Tempest lib supports all operations available in Discord API through HTTP except sending files. For now, you can only receive files.
-
-### Getting started
-1. Install with: `go get -u github.com/Amatsagu/Tempest`
-2. Check [example](https://github.com/Amatsagu/Tempest/blob/master/example) with few simple commands.
-
-
+> This side version of Tempest won't support any new features.
 
 ## Troubleshooting
 For help feel free to open an issue on github.
 You can also inivite to contact me on [discord](https://discord.com/users/390394829789593601).
-
-## Contributing
-All contributions are welcomed.
-Few rules before making a pull request:
-* Use [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) 
-* Add link to document for new structs
-    - Since `v1.1.0`, all structs have links to corresponding discord docs
-
-
-
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FAmatsagu%2FTempest.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FAmatsagu%2FTempest?ref=badge_large)
