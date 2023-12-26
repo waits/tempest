@@ -77,9 +77,6 @@ type Command struct {
 	AvailableInDM            bool                `json:"dm_permission,omitempty"`                     // Whether command should be visible (usable) from private, dm channels. Works only for global commands!
 	NSFW                     bool                `json:"nsfw,omitempty"`                              // https://discord.com/developers/docs/interactions/application-commands#agerestricted-commands
 	Version                  Snowflake           `json:"version,omitempty"`                           // Autoincrementing version identifier updated during substantial record changes
-
-	AutoCompleteHandler func(itx CommandInteraction) []Choice `json:"-"` // Custom handler for auto complete interactions. It's a Tempest specific field.
-	SlashCommandHandler func(itx *CommandInteraction)         `json:"-"` // Custom handler for slash command interactions. It's a Tempest specific field. It receives pointer to CommandInteraction as it's being used with pre & post client hooks.
 }
 
 // https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure

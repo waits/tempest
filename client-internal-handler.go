@@ -39,36 +39,15 @@ func (client *Client) handleRequest(w http.ResponseWriter, r *http.Request) {
 		w.Write(private_PING_RESPONSE_RAW_BODY)
 		return
 	case APPLICATION_COMMAND_INTERACTION_TYPE:
-		var interaction CommandInteraction
-		err := json.Unmarshal(buf, &interaction)
+		var itx CommandInteraction
+		err := json.Unmarshal(buf, &itx)
 		if err != nil {
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}
 
-		itx, command, available := client.seekCommand(interaction)
-		if !available {
-			w.Header().Add("Content-Type", "application/json")
-			w.Write(private_UNKNOWN_COMMAND_RESPONSE_RAW_BODY)
-			return
-		}
-
 		w.WriteHeader(http.StatusNoContent)
-
-		if !command.AvailableInDM && interaction.GuildID == 0 {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-
-		if client.preCommandHandler != nil && !client.preCommandHandler(command, &itx) {
-			return
-		}
-
-		command.SlashCommandHandler(&itx)
-
-		if client.postCommandHandler != nil {
-			client.postCommandHandler(command, &itx)
-		}
+		client.CommandHandler(itx)
 		return
 	case MESSAGE_COMPONENT_INTERACTION_TYPE:
 		var itx ComponentInteraction
@@ -77,14 +56,7 @@ func (client *Client) handleRequest(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}
-
 		itx.Client = client
-		fn, available := client.components[itx.Data.CustomID]
-		if available && fn != nil {
-			itx.w = w
-			fn(itx)
-			return
-		}
 
 		client.qMu.RLock()
 		signalChannel, available := client.queuedComponents[itx.Data.CustomID]
@@ -96,31 +68,22 @@ func (client *Client) handleRequest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if client.componentHandler != nil {
-			itx.w = w
-			client.componentHandler(&itx)
-		}
-
+		w.WriteHeader(http.StatusNoContent)
+		client.ComponentHandler(itx)
 		return
 	case APPLICATION_COMMAND_AUTO_COMPLETE_INTERACTION_TYPE:
-		var interaction CommandInteraction
-		err := json.Unmarshal(buf, &interaction)
+		var itx CommandInteraction
+		err := json.Unmarshal(buf, &itx)
 		if err != nil {
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}
 
-		itx, command, available := client.seekCommand(interaction)
-		if !available || command.AutoCompleteHandler == nil || len(command.Options) == 0 {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-
-		choices := command.AutoCompleteHandler(itx)
+		itx.Client = client
 		body, err := json.Marshal(ResponseAutoComplete{
 			Type: AUTOCOMPLETE_RESPONSE_TYPE,
 			Data: &ResponseAutoCompleteData{
-				Choices: choices,
+				Choices: client.AutoCompleteHandler(itx),
 			},
 		})
 
@@ -139,13 +102,7 @@ func (client *Client) handleRequest(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}
-
-		fn, available := client.modals[itx.Data.CustomID]
-		if available && fn != nil {
-			itx.w = w
-			fn(itx)
-			return
-		}
+		itx.Client = client
 
 		client.qMu.RLock()
 		signalChannel, available := client.queuedModals[itx.Data.CustomID]
@@ -156,11 +113,8 @@ func (client *Client) handleRequest(w http.ResponseWriter, r *http.Request) {
 			signalChannel <- &itx
 		}
 
-		if client.modalHandler != nil {
-			itx.w = w
-			client.modalHandler(&itx)
-		}
-
+		w.WriteHeader(http.StatusNoContent)
+		client.ModalHandler(itx)
 		return
 	}
 }

@@ -12,14 +12,14 @@ import (
 )
 
 type ClientOptions struct {
-	PublicKey        string // Hash like key used to verify incoming payloads from Discord. (default: <nil>)
-	Rest             Rest
-	HTTPServer       HTTPServer
-	HTTPServeMux     HTTPServeMux
-	PreCommandHook   func(cmd *Command, itx *CommandInteraction) bool // Function that runs before each command. Return type signals whether to continue command execution (return with false to stop early).
-	PostCommandHook  func(cmd *Command, itx *CommandInteraction)      // Function that runs after each command.
-	ComponentHandler func(itx *ComponentInteraction)                  // Function that runs for each unhandled component.
-	ModalHandler     func(itx *ModalInteraction)                      // Function that runs for each unhandled modal.
+	PublicKey           string // Hash like key used to verify incoming payloads from Discord. (default: <nil>)
+	Rest                Rest
+	HTTPServer          HTTPServer
+	HTTPServeMux        HTTPServeMux
+	CommandHandler      func(itx CommandInteraction)
+	AutoCompleteHandler func(itx CommandInteraction) []Choice
+	ComponentHandler    func(itx ComponentInteraction) // Function that runs for each unhandled component.
+	ModalHandler        func(itx ModalInteraction)     // Function that runs for each unhandled modal.
 }
 
 type Client struct {
@@ -29,14 +29,10 @@ type Client struct {
 	httpServer    HTTPServer
 	httpServeMux  HTTPServeMux
 
-	preCommandHandler  func(cmd *Command, itx *CommandInteraction) bool
-	postCommandHandler func(cmd *Command, itx *CommandInteraction)
-	componentHandler   func(itx *ComponentInteraction)
-	modalHandler       func(itx *ModalInteraction)
-
-	commands   map[string]map[string]Command         // Internal cache for commands. Only writeable before starting application!
-	components map[string]func(ComponentInteraction) // Internal cache for "static" components. Only writeable before starting application!
-	modals     map[string]func(ModalInteraction)     // Internal cache for "static" modals. Only writeable before starting application!
+	CommandHandler      func(itx CommandInteraction)
+	AutoCompleteHandler func(itx CommandInteraction) []Choice
+	ComponentHandler    func(itx ComponentInteraction) // Function that runs for each unhandled component.
+	ModalHandler        func(itx ModalInteraction)     // Function that runs for each unhandled modal.
 
 	qMu              sync.RWMutex // Shated mutex for dynamic, components & modals.
 	queuedComponents map[string]chan *ComponentInteraction
@@ -64,13 +60,6 @@ func (client *Client) State() ClientState {
 //
 // Warning! Components handled this way will already be acknowledged.
 func (client *Client) AwaitComponent(customIDs []string, timeout time.Duration) (<-chan *ComponentInteraction, func(), error) {
-	for _, ID := range customIDs {
-		_, exists := client.components[ID]
-		if exists {
-			return nil, nil, errors.New("client already has registered \"" + ID + "\" component as static (custom id already in use)")
-		}
-	}
-
 	signalChannel := make(chan *ComponentInteraction)
 	closeFunction := func() {
 		if signalChannel != nil {
@@ -108,11 +97,6 @@ func (client *Client) AwaitComponent(customIDs []string, timeout time.Duration) 
 //
 // Warning! Components handled this way will already be acknowledged.
 func (client *Client) AwaitModal(customID string, timeout time.Duration) (<-chan *ModalInteraction, func(), error) {
-	_, exists := client.components[customID]
-	if exists {
-		return nil, nil, errors.New("client already has registered \"" + customID + "\" modal as static (custom id already in use)")
-	}
-
 	signalChannel := make(chan *ModalInteraction)
 	closeFunction := func() {
 		if signalChannel != nil {
@@ -194,9 +178,6 @@ func (client *Client) Close(ctx context.Context) error {
 	}
 
 	client.state.Store(uint32(CLOSING_STATE))
-	client.preCommandHandler = func(cmd *Command, itx *CommandInteraction) bool {
-		return false
-	}
 
 	for key, componentChannel := range client.queuedComponents {
 		if _, open := <-componentChannel; open {
@@ -245,20 +226,19 @@ func NewClient(options ClientOptions) *Client {
 	}
 
 	return &Client{
-		Rest:          options.Rest,
-		ApplicationID: botUserID,
-		PublicKey:     ed25519.PublicKey(discordPublicKey),
-		httpServer:    options.HTTPServer,
-		httpServeMux:  options.HTTPServeMux,
-
-		preCommandHandler:  options.PreCommandHook,
-		postCommandHandler: options.PostCommandHook,
-		componentHandler:   options.ComponentHandler,
-		modalHandler:       options.ModalHandler,
-
-		commands:         make(map[string]map[string]Command),
-		components:       make(map[string]func(ComponentInteraction)),
-		modals:           make(map[string]func(ModalInteraction)),
+		Rest:           options.Rest,
+		ApplicationID:  botUserID,
+		PublicKey:      ed25519.PublicKey(discordPublicKey),
+		httpServer:     options.HTTPServer,
+		httpServeMux:   options.HTTPServeMux,
+		CommandHandler: func(itx CommandInteraction) {},
+		AutoCompleteHandler: func(itx CommandInteraction) []Choice {
+			return []Choice{
+				{Name: "Invalid choice", Value: "Not implemented auto complete handler."},
+			}
+		},
+		ComponentHandler: func(itx ComponentInteraction) {},
+		ModalHandler:     func(itx ModalInteraction) {},
 		queuedComponents: make(map[string]chan *ComponentInteraction),
 		queuedModals:     make(map[string]chan *ModalInteraction),
 	}
