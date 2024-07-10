@@ -1,3 +1,3 @@
-module github.com/Amatsagu/Tempest
+module github.com/waits/tempest
 
 go 1.22.0
